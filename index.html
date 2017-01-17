@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js" integrity="sha256-RASNMNlmRtIreeznffYMDUxBXcMRjijEaaGF/gxT6vw=" crossorigin="anonymous"></script>
+  </head>
+  <body>
+
+    <canvas id="popChart" width="100" height="100"></canvas>
+
+    <script>
+      function dataCallback(data) {
+        var fbData = _.map(data)
+
+        var destructionColor = 'rgba(255,99,132,0.5)';
+        var orderColor = 'rgba(54, 162, 235, 0.5)';
+
+        var popChart = new Chart(document.getElementById("popChart"), {
+          type: 'line',
+          data: {
+            labels: _.map(fbData, 'created'),
+            datasets: [
+              {
+                label: 'player_count',
+                data: _.map(fbData, 'player_count')
+              },
+              {
+                label: 'tier_1_destruction_count',
+                backgroundColor: destructionColor,
+                hidden: true,
+                data: _.map(fbData, 'tier_1_destruction_count')
+              },
+              {
+                label: 'tier_1_order_count',
+                backgroundColor: orderColor,
+                hidden: true,
+                data: _.map(fbData, 'tier_1_order_count')
+              },
+              {
+                label: 'tier_2_destruction_count',
+                backgroundColor: destructionColor,
+                hidden: true,
+                data: _.map(fbData, 'tier_2_destruction_count')
+              },
+              {
+                label: 'tier_2_order_count',
+                backgroundColor: orderColor,
+                hidden: true,
+                data: _.map(fbData, 'tier_2_order_count')
+              },
+              {
+                label: 'tier_3_destruction_count',
+                backgroundColor: destructionColor,
+                hidden: true,
+                data: _.map(fbData, 'tier_3_destruction_count')
+              },
+              {
+                label: 'tier_3_order_count',
+                backgroundColor: orderColor,
+                hidden: true,
+                data: _.map(fbData, 'tier_3_order_count')
+              },
+              {
+                label: 'tier_4_destruction_count',
+                backgroundColor: destructionColor,
+                hidden: true,
+                data: _.map(fbData, 'tier_4_destruction_count')
+              },
+              {
+                label: 'tier_4_order_count',
+                backgroundColor: orderColor,
+                hidden: true,
+                data: _.map(fbData, 'tier_4_order_count')
+              }
+            ]
+          },
+          options: {
+            scales: {
+              xAxes: [{
+                type: 'time',
+                time: {
+                  displayFormats: {
+                      quarter: 'LLL'
+                  },
+                  tooltipFormat: 'LLL'
+                }
+              }]
+            }
+          }
+        });
+
+      }
+    </script>
+    <script src="https://ror-pop.firebaseio.com/whos_online.json?orderBy=%22created%22&limitToLast=25&callback=dataCallback"></script>
+
+  </body>
+</html>
