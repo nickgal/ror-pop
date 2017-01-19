@@ -1,111 +1,131 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" integrity="sha256-eVNjHw5UeU0jUqPPpZHAkU1z4U+QFBBY488WvueTm88=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js" integrity="sha256-RASNMNlmRtIreeznffYMDUxBXcMRjijEaaGF/gxT6vw=" crossorigin="anonymous"></script>
-    <script src="https://npmcdn.com/Chart.Zoom.js@latest/Chart.Zoom.min.js"></script>
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script>
+      $(function () {
+          var seriesOptions = [],
+              seriesCounter = 0,
+              names = ['player_count',
+                      'tier_1_destruction_count',
+                      'tier_1_order_count',
+                      'tier_2_destruction_count',
+                      'tier_2_order_count',
+                      'tier_3_destruction_count',
+                      'tier_3_order_count',
+                      'tier_4_destruction_count',
+                      'tier_4_order_count'];
+          /**
+          * Create the chart when all data is loaded
+          * @returns {undefined}
+          */
+          function createChart() {
+
+              Highcharts.stockChart('container', {
+
+                  legend: {
+                      enabled: true,
+                      align: 'left',
+                      verticalAlign: 'top',
+                      y: 20,
+                      floating: true,
+                      borderWidth: 0
+                  },
+
+                  rangeSelector: {
+                      selected: 4,
+                      buttons: [{
+                          type: 'hour',
+                          count: 1,
+                          text: '1h'
+                      },{
+                          type: 'hour',
+                          count: 6,
+                          text: '6h'
+                      },{
+                          type: 'hour',
+                          count: 12,
+                          text: '12h'
+                      },{
+                          type: 'day',
+                          count: 1,
+                          text: '1d'
+                      },{
+                          type: 'day',
+                          count: 3,
+                          text: '3d'
+                      }, {
+                          type: 'week',
+                          count: 1,
+                          text: '1w'
+                      }, {
+                          type: 'month',
+                          count: 1,
+                          text: '1m'
+                      }]
+                  },
+
+                  yAxis: {
+                      // labels: {
+                      //     formatter: function () {
+                      //         return (this.value > 0 ? ' + ' : '') + this.value + '%';
+                      //     }
+                      // },
+                      plotLines: [{
+                          value: 0,
+                          width: 2,
+                          color: 'silver'
+                      }]
+                  },
+
+                  plotOptions: {
+                      series: {
+                          compare: 'percent',
+                          showInNavigator: true
+                      }
+                  },
+
+                  tooltip: {
+                      pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.change}%)<br/>',
+                      valueDecimals: 2,
+                      split: true
+                  },
+
+                  series: seriesOptions
+              });
+          }
+
+          $.getJSON('https://ror-pop.firebaseio.com/whos_online.json?orderBy=%22created%22&limitToLast=1008&callback=?', function(data){
+            var fbData = _.map(data);
+
+            $.each(names, function (i, name) {
+                var seriesData = _.map(fbData, function(d) {
+                  return [d.created, d[name]];
+                });
+
+                seriesOptions[i] = {
+                    name: name,
+                    data: seriesData,
+                    visible: i == 0
+                };
+
+                // As we're loading the data asynchronously, we don't know what order it will arrive. So
+                // we keep a counter and create the chart when all the data is loaded.
+                seriesCounter += 1;
+
+                if (seriesCounter === names.length) {
+                    createChart();
+                }
+            });
+
+          });
+
+      });
+    </script>
   </head>
   <body>
-
-    <canvas id="popChart" width="100" height="50"></canvas>
-
-    <script>
-      function dataCallback(data) {
-        var fbData = _.map(data);
-
-        var destructionColor = 'rgba(255,99,132,0.5)';
-        var orderColor = 'rgba(54, 162, 235, 0.5)';
-
-        Chart.defaults.global.elements.line.tension = 0;
-        Chart.defaults.global.elements.point.radius = 0;
-        Chart.defaults.global.elements.point.hitRadius = 3;
-
-        var popChart = new Chart(document.getElementById("popChart"), {
-          type: 'line',
-          data: {
-            labels: _.map(fbData, 'created'),
-            datasets: [
-              {
-                label: 'player_count',
-                data: _.map(fbData, 'player_count')
-              },
-              {
-                label: 'tier_1_destruction_count',
-                backgroundColor: destructionColor,
-                hidden: true,
-                data: _.map(fbData, 'tier_1_destruction_count')
-              },
-              {
-                label: 'tier_1_order_count',
-                backgroundColor: orderColor,
-                hidden: true,
-                data: _.map(fbData, 'tier_1_order_count')
-              },
-              {
-                label: 'tier_2_destruction_count',
-                backgroundColor: destructionColor,
-                hidden: true,
-                data: _.map(fbData, 'tier_2_destruction_count')
-              },
-              {
-                label: 'tier_2_order_count',
-                backgroundColor: orderColor,
-                hidden: true,
-                data: _.map(fbData, 'tier_2_order_count')
-              },
-              {
-                label: 'tier_3_destruction_count',
-                backgroundColor: destructionColor,
-                hidden: true,
-                data: _.map(fbData, 'tier_3_destruction_count')
-              },
-              {
-                label: 'tier_3_order_count',
-                backgroundColor: orderColor,
-                hidden: true,
-                data: _.map(fbData, 'tier_3_order_count')
-              },
-              {
-                label: 'tier_4_destruction_count',
-                backgroundColor: destructionColor,
-                hidden: true,
-                data: _.map(fbData, 'tier_4_destruction_count')
-              },
-              {
-                label: 'tier_4_order_count',
-                backgroundColor: orderColor,
-                hidden: true,
-                data: _.map(fbData, 'tier_4_order_count')
-              }
-            ]
-          },
-          options: {
-            pan: {
-              enabled: true,
-              mode: 'xy'
-            },
-            zoom: {
-              enabled: true,
-              mode: 'xy',
-            },
-            scales: {
-              xAxes: [{
-                type: 'time',
-                time: {
-                  displayFormats: {
-                      quarter: 'LLL'
-                  },
-                  tooltipFormat: 'LLL'
-                }
-              }]
-            }
-          }
-        });
-
-      }
-    </script>
-    <script src="https://ror-pop.firebaseio.com/whos_online.json?orderBy=%22created%22&limitToLast=1008&callback=dataCallback"></script>
-
+    <div id="container" style="height: 400px; min-width: 310px"></div>
   </body>
 </html>
