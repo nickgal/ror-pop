@@ -12,10 +12,14 @@
 
     <script>
       function dataCallback(data) {
-        var fbData = _.map(data)
+        var fbData = _.map(data);
 
         var destructionColor = 'rgba(255,99,132,0.5)';
         var orderColor = 'rgba(54, 162, 235, 0.5)';
+
+        Chart.defaults.global.elements.line.tension = 0;
+        Chart.defaults.global.elements.point.radius = 0;
+        Chart.defaults.global.elements.point.hitRadius = 3;
 
         var popChart = new Chart(document.getElementById("popChart"), {
           type: 'line',
@@ -101,7 +105,7 @@
 
       }
     </script>
-    <script src="https://ror-pop.firebaseio.com/whos_online.json?orderBy=%22created%22&limitToLast=144&callback=dataCallback"></script>
+    <script src="https://ror-pop.firebaseio.com/whos_online.json?orderBy=%22created%22&limitToLast=1008&callback=dataCallback"></script>
 
   </body>
 </html>
