@@ -11,6 +11,12 @@
     <script src="https://code.highcharts.com/stock/highstock.js"></script>
     <script>
       $(function () {
+          Highcharts.setOptions({
+            global: {
+              useUTC: false
+            }
+          });
+
           var seriesOptions = [],
               seriesCounter = 0,
               names = ['player_count',
