@@ -37,12 +37,12 @@
               Highcharts.stockChart('container', {
 
                   legend: {
-                      enabled: true,
-                      align: 'left',
-                      verticalAlign: 'bottom',
-                      y: 0,
-                      floating: false,
-                      borderWidth: 0
+                    enabled: true,
+                    align: 'left',
+                    verticalAlign: 'bottom',
+                    y: 0,
+                    floating: false,
+                    borderWidth: 0
                   },
 
                   rangeSelector: {
@@ -78,12 +78,24 @@
                       }]
                   },
 
+                  xAxis: {
+                    type: 'datetime',
+                    dateTimeLabelFormats: {
+                      millisecond: '%l:%M:%S.%L %p',
+                      second: '%l:%M:%S %p',
+                      minute: '%l:%M %p',
+                      hour: '%l:%M %p',
+                      day: '%b %e',
+                      week: '%b %e',
+                    }
+                  },
+
                   yAxis: {
-                      // labels: {
-                      //     formatter: function () {
-                      //         return (this.value > 0 ? ' + ' : '') + this.value + '%';
-                      //     }
-                      // },
+                      labels: {
+                          formatter: function () {
+                              return (this.value > 0 ? ' + ' : '') + this.value + '%';
+                          }
+                      },
                       plotLines: [{
                           value: 0,
                           width: 2,
@@ -100,7 +112,10 @@
 
                   tooltip: {
                       pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.change}%)<br/>',
-                      split: true
+                      split: true,
+                      dateTimeLabelFormats: {
+                        millisecond: '%A, %b %e, %l:%M:%S.%L %p'
+                      }
                   },
 
                   series: seriesOptions
