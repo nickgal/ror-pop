@@ -6,11 +6,56 @@
         background-color: #222;
       }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/3.6.2/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+      var config = {
+        apiKey: "AIzaSyBv7uyahcQvqcjstjUdKT3fkA1BzAQGKWk",
+        authDomain: "ror-pop.firebaseapp.com",
+        databaseURL: "https://ror-pop.firebaseio.com",
+        storageBucket: "ror-pop.appspot.com",
+        // messagingSenderId: "<SENDER_ID>",
+      };
+      firebase.initializeApp(config);
+    </script>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
     <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <!--<script src="http://github.highcharts.com/highstock.js"></script>-->
     <script>
+
+      // Patch to fix undefined array items by turning them into zeroes
+      var origDSetter = Highcharts.SVGElement.prototype.dSetter
+      Highcharts.SVGElement.prototype.dSetter = function (a, h, d) {
+        a = _.map(a, function(o) {
+          if (o === undefined)
+            o = 0;
+          return o;
+        });
+        origDSetter(a, h, d);
+      }
+
+      // debounce for adding points.
+      var updateChart = _.debounce(function(){ chart.redraw() }, 350, {
+        leading: true
+      });
+
+
       $(function () {
+        var whosOnlineRef = firebase.database().ref('whos_online');
+        whosOnlineRef.on('child_added', function(data) {
+          var redraw = false;
+
+          $.each(names, function (i, name) {
+            var created = data.val().created;
+            var onlineCount = parseInt(data.val()[name]);
+            var series = _.find(chart.series, { name: name });
+            // console.log(name, created, onlineCount)
+            series.addPoint([created, onlineCount], redraw);
+            updateChart();
+          });
+        });
+
           Highcharts.setOptions({
             global: {
               useUTC: false
@@ -34,7 +79,7 @@
           */
           function createChart() {
 
-              Highcharts.stockChart('container', {
+              window.chart = Highcharts.stockChart('container', {
 
                   legend: {
                     enabled: true,
@@ -122,29 +167,17 @@
               });
           }
 
-          $.getJSON('https://ror-pop.firebaseio.com/whos_online.json?orderBy=%22created%22&limitToLast=1008&callback=?', function(data){
-            var fbData = _.map(data);
-
-            $.each(names, function (i, name) {
-                var seriesData = _.map(fbData, function(d) {
-                  return [d.created, d[name]];
-                });
-
-                seriesOptions[i] = {
-                    name: name,
-                    data: seriesData,
-                    visible: i == 0
-                };
-
-                // As we're loading the data asynchronously, we don't know what order it will arrive. So
-                // we keep a counter and create the chart when all the data is loaded.
-                seriesCounter += 1;
-
-                if (seriesCounter === names.length) {
-                    createChart();
-                }
-            });
-
+          // Add empty series for each name
+          $.each(names, function (i, name) {
+            seriesOptions[i] = {
+                name: name,
+                data: [],
+                visible: i == 0
+            };
+            seriesCounter += 1;
+            if (seriesCounter === names.length) {
+              createChart();
+            }
           });
 
       });
@@ -353,10 +386,10 @@
         textColor: '#C0C0C0',
         contrastTextColor: '#F0F0F3',
         maskColor: 'rgba(255,255,255,0.3)'
-        };
+      };
 
-        // Apply the theme
-        Highcharts.setOptions(Highcharts.theme);
+      // Apply the theme
+      Highcharts.setOptions(Highcharts.theme);
     </script>
   </head>
   <body>
