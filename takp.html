@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style type="text/css">
+      html, body {
+        background-color: #222;
+      }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/3.6.2/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+      var config = {
+        apiKey: "AIzaSyBv7uyahcQvqcjstjUdKT3fkA1BzAQGKWk",
+        authDomain: "ror-pop.firebaseapp.com",
+        databaseURL: "https://ror-pop.firebaseio.com",
+        storageBucket: "ror-pop.appspot.com",
+        // messagingSenderId: "<SENDER_ID>",
+      };
+      firebase.initializeApp(config);
+    </script>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <!--<script src="http://github.highcharts.com/highstock.js"></script>-->
+    <script>
+
+      // Patch to fix undefined array items by turning them into zeroes
+      var origDSetter = Highcharts.SVGElement.prototype.dSetter
+      Highcharts.SVGElement.prototype.dSetter = function (a, h, d) {
+        a = _.map(a, function(o) {
+          if (o === undefined)
+            o = 0;
+          return o;
+        });
+        origDSetter(a, h, d);
+      }
+
+      // debounce for adding points.
+      var updateChart = _.debounce(function(){ chart.redraw() }, 350, {
+        leading: true
+      });
+
+
+      $(function () {
+        var whosOnlineRef = firebase.database().ref('takp_online');
+        whosOnlineRef.on('child_added', function(data) {
+          var redraw = false;
+
+          var created = data.val().created;
+          var onlineCount = data.val().count;
+          var series = _.find(chart.series, { name: names[0] });
+          series.addPoint([created, onlineCount], redraw);
+          updateChart();
+
+        });
+
+          Highcharts.setOptions({
+            global: {
+              useUTC: false
+            }
+          });
+
+          var seriesOptions = [],
+              seriesCounter = 0,
+              names = ['player_count'];
+          /**
+          * Create the chart when all data is loaded
+          * @returns {undefined}
+          */
+          function createChart() {
+
+              window.chart = Highcharts.stockChart('container', {
+
+                  legend: {
+                    enabled: true,
+                    align: 'left',
+                    verticalAlign: 'bottom',
+                    y: 0,
+                    floating: false,
+                    borderWidth: 0
+                  },
+
+                  rangeSelector: {
+                      selected: 4,
+                      buttons: [{
+                          type: 'hour',
+                          count: 1,
+                          text: '1h'
+                      },{
+                          type: 'hour',
+                          count: 6,
+                          text: '6h'
+                      },{
+                          type: 'hour',
+                          count: 12,
+                          text: '12h'
+                      },{
+                          type: 'day',
+                          count: 1,
+                          text: '1d'
+                      },{
+                          type: 'day',
+                          count: 3,
+                          text: '3d'
+                      }, {
+                          type: 'week',
+                          count: 1,
+                          text: '1w'
+                      }, {
+                          type: 'month',
+                          count: 1,
+                          text: '1m'
+                      }]
+                  },
+
+                  xAxis: {
+                    type: 'datetime',
+                    dateTimeLabelFormats: {
+                      millisecond: '%l:%M:%S.%L %p',
+                      second: '%l:%M:%S %p',
+                      minute: '%l:%M %p',
+                      hour: '%l:%M %p',
+                      day: '%b %e',
+                      week: '%b %e',
+                    }
+                  },
+
+                  yAxis: {
+                      labels: {
+                          formatter: function () {
+                              return (this.value > 0 ? ' + ' : '') + this.value + '%';
+                          }
+                      },
+                      plotLines: [{
+                          value: 0,
+                          width: 2,
+                          color: 'silver'
+                      }]
+                  },
+
+                  plotOptions: {
+                      series: {
+                          compare: 'percent',
+                          showInNavigator: true
+                      }
+                  },
+
+                  tooltip: {
+                      pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.change}%)<br/>',
+                      split: true,
+                      dateTimeLabelFormats: {
+                        millisecond: '%A, %b %e, %l:%M:%S.%L %p'
+                      }
+                  },
+
+                  series: seriesOptions
+              });
+          }
+
+          // Add empty series for each name
+          $.each(names, function (i, name) {
+            seriesOptions[i] = {
+                name: name,
+                data: [],
+                visible: i == 0
+            };
+            seriesCounter += 1;
+            if (seriesCounter === names.length) {
+              createChart();
+            }
+          });
+
+      });
+    </script>
+    <script>
+        Highcharts.createElement('link', {
+        href: 'https://fonts.googleapis.com/css?family=Unica+One',
+        rel: 'stylesheet',
+        type: 'text/css'
+        }, null, document.getElementsByTagName('head')[0]);
+
+        Highcharts.theme = {
+        colors: ['#2b908f', '#90ee7e', '#f45b5b', '#7798BF', '#aaeeee', '#ff0066', '#eeaaee',
+            '#55BF3B', '#DF5353', '#7798BF', '#aaeeee'],
+        chart: {
+            backgroundColor: {
+                linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
+                stops: [
+                    [0, '#2a2a2b'],
+                    [1, '#3e3e40']
+                ]
+            },
+            style: {
+                fontFamily: '\'Unica One\', sans-serif'
+            },
+            plotBorderColor: '#606063'
+        },
+        title: {
+            style: {
+                color: '#E0E0E3',
+                textTransform: 'uppercase',
+                fontSize: '20px'
+            }
+        },
+        subtitle: {
+            style: {
+                color: '#E0E0E3',
+                textTransform: 'uppercase'
+            }
+        },
+        xAxis: {
+            gridLineColor: '#707073',
+            labels: {
+                style: {
+                    color: '#E0E0E3'
+                }
+            },
+            lineColor: '#707073',
+            minorGridLineColor: '#505053',
+            tickColor: '#707073',
+            title: {
+                style: {
+                    color: '#A0A0A3'
+
+                }
+            }
+        },
+        yAxis: {
+            gridLineColor: '#707073',
+            labels: {
+                style: {
+                    color: '#E0E0E3'
+                }
+            },
+            lineColor: '#707073',
+            minorGridLineColor: '#505053',
+            tickColor: '#707073',
+            tickWidth: 1,
+            title: {
+                style: {
+                    color: '#A0A0A3'
+                }
+            }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            style: {
+                color: '#F0F0F0'
+            }
+        },
+        plotOptions: {
+            series: {
+                dataLabels: {
+                    color: '#B0B0B3'
+                },
+                marker: {
+                    lineColor: '#333'
+                }
+            },
+            boxplot: {
+                fillColor: '#505053'
+            },
+            candlestick: {
+                lineColor: 'white'
+            },
+            errorbar: {
+                color: 'white'
+            }
+        },
+        legend: {
+            itemStyle: {
+                color: '#E0E0E3'
+            },
+            itemHoverStyle: {
+                color: '#FFF'
+            },
+            itemHiddenStyle: {
+                color: '#606063'
+            }
+        },
+        credits: {
+            style: {
+                color: '#666'
+            }
+        },
+        labels: {
+            style: {
+                color: '#707073'
+            }
+        },
+
+        drilldown: {
+            activeAxisLabelStyle: {
+                color: '#F0F0F3'
+            },
+            activeDataLabelStyle: {
+                color: '#F0F0F3'
+            }
+        },
+
+        navigation: {
+            buttonOptions: {
+                symbolStroke: '#DDDDDD',
+                theme: {
+                    fill: '#505053'
+                }
+            }
+        },
+
+        // scroll charts
+        rangeSelector: {
+            buttonTheme: {
+                fill: '#505053',
+                stroke: '#000000',
+                style: {
+                    color: '#CCC'
+                },
+                states: {
+                    hover: {
+                    fill: '#707073',
+                    stroke: '#000000',
+                    style: {
+                        color: 'white'
+                    }
+                    },
+                    select: {
+                    fill: '#000003',
+                    stroke: '#000000',
+                    style: {
+                        color: 'white'
+                    }
+                    }
+                }
+            },
+            inputBoxBorderColor: '#505053',
+            inputStyle: {
+                backgroundColor: '#333',
+                color: 'silver'
+            },
+            labelStyle: {
+                color: 'silver'
+            }
+        },
+
+        navigator: {
+            handles: {
+                backgroundColor: '#666',
+                borderColor: '#AAA'
+            },
+            outlineColor: '#CCC',
+            maskFill: 'rgba(255,255,255,0.1)',
+            series: {
+                color: '#7798BF',
+                lineColor: '#A6C7ED'
+            },
+            xAxis: {
+                gridLineColor: '#505053'
+            }
+        },
+
+        scrollbar: {
+            barBackgroundColor: '#808083',
+            barBorderColor: '#808083',
+            buttonArrowColor: '#CCC',
+            buttonBackgroundColor: '#606063',
+            buttonBorderColor: '#606063',
+            rifleColor: '#FFF',
+            trackBackgroundColor: '#404043',
+            trackBorderColor: '#404043'
+        },
+
+        // special colors for some of the
+        legendBackgroundColor: 'rgba(0, 0, 0, 0.5)',
+        background2: '#505053',
+        dataLabelsColor: '#B0B0B3',
+        textColor: '#C0C0C0',
+        contrastTextColor: '#F0F0F3',
+        maskColor: 'rgba(255,255,255,0.3)'
+      };
+
+      // Apply the theme
+      Highcharts.setOptions(Highcharts.theme);
+    </script>
+  </head>
+  <body>
+    <div id="container" style="height: 400px; min-width: 310px"></div>
+  </body>
+</html>

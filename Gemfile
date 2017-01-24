@@ -8,5 +8,7 @@ gem 'nokogiri'
 gem 'whenever', require: false
 gem 'activesupport', '~> 4.2.7'
 
+gem 'mechanize'
+
 gem 'dotenv'
 gem 'pry'

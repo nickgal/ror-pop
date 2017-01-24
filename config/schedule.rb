@@ -20,5 +20,6 @@
 # Learn more: http://github.com/javan/whenever
 
 every 10.minutes do
-  rake 'ror_pop', output: 'cron.log'
+  rake 'ror_pop', output: 'ror_pop.log'
+  rake 'takp_pop', output: 'takp_pop.log'
 end
